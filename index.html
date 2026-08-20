@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finance">
+<meta name="theme-color" content="#0a0e1a">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Finance","short_name":"Finance","display":"standalone","start_url":".","background_color":"#0a0e1a","theme_color":"#0a0e1a"}'>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Crect width='180' height='180' rx='40' fill='%230b0f16'/%3E%3Ctext x='50%25' y='58%25' font-size='96' text-anchor='middle' fill='%2358a6ff' font-family='Segoe UI,sans-serif'%3E%E2%82%A3%3C/text%3E%3C/svg%3E">
+<title>Finance</title>
+<style>
+ :root{
+   --bg:#0a0e1a;--card:#151b30;--card2:#111730;--grid:#242c48;--grid2:#313b60;
+   --ink:#eef1f8;--ink2:#b6bdd6;--muted:#818bab;
+   --acc:#7c9dff;--acc2:#c07bff;--good:#37d399;--bad:#ff6b6b;--flag:#ffb454;
+   --grad:linear-gradient(135deg,#7c9dff,#c07bff);
+ }
+ *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+ body{margin:0;background:var(--bg);color:var(--ink);
+   font-family:"Segoe UI",system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.5;
+   -webkit-text-size-adjust:100%;
+   background-image:radial-gradient(1100px 520px at 100% -8%,rgba(192,123,255,.18),transparent 60%),
+     radial-gradient(900px 520px at -10% 0,rgba(124,157,255,.14),transparent 55%)}
+ .wrap{max-width:600px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 12px) 16px 96px}
+ h1{font-size:20px;margin:0} h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 12px}
+ h3{font-size:15px;margin:2px 0 8px}
+ .sub{color:var(--muted);font-size:13px}
+ .card{background:var(--card);border:1px solid var(--grid);border-radius:18px;padding:16px;margin-bottom:14px}
+ .row{display:flex;gap:10px}
+ .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+ .brand{display:flex;align-items:center;gap:10px}
+ .logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:grid;place-items:center;font-size:20px;color:#fff}
+ .lock{color:var(--acc);text-decoration:none;font-size:13px;font-weight:600;background:#111a2b;
+   border:1px solid var(--grid2);padding:7px 12px;border-radius:10px}
+ /* KPIs */
+ .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .kpi{background:var(--card2);border:1px solid var(--grid);border-radius:14px;padding:12px 14px;position:relative;overflow:hidden}
+ .kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--acc)}
+ .kpi.g::before{background:var(--good)} .kpi.r::before{background:var(--bad)} .kpi.o::before{background:var(--flag)}
+ .kpi .l{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+ .kpi .v{font-size:20px;font-weight:750;margin-top:4px;font-variant-numeric:tabular-nums}
+ .v.pos{color:var(--good)} .v.neg{color:var(--bad)}
+ /* inputs */
+ label{display:block;font-size:13px;color:var(--muted);margin:10px 0 5px;font-weight:600}
+ input,select,textarea{width:100%;padding:13px;border:1px solid var(--grid2);border-radius:13px;
+   font-size:16px;font-family:inherit;background:#0d131f;color:var(--ink);outline:none}
+ input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(88,166,255,.22)}
+ textarea{min-height:96px;resize:vertical}
+ .btn{display:block;width:100%;border:0;border-radius:15px;padding:16px;font-size:17px;font-weight:750;
+   color:#fff;background:var(--grad);margin-top:12px;cursor:pointer}
+ .btn.sec{background:#111a2b;color:var(--ink2);border:1px solid var(--grid2)}
+ .btn:active{transform:scale(.99)}
+ .btn.add{padding:18px;font-size:18px;border-radius:18px;letter-spacing:.02em;margin-top:18px;
+   box-shadow:0 14px 30px rgba(124,157,255,.42);display:flex;align-items:center;justify-content:center;gap:8px}
+ .btn.add .ic{font-size:24px;line-height:1;font-weight:400}
+ .btn.add:active{transform:scale(.98);box-shadow:0 8px 18px rgba(124,157,255,.35)}
+ .homeadd{margin:2px 0 14px}
+ .seg{display:flex;gap:8px;margin-top:6px}
+ .seg button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--grid2);background:#0d131f;
+   color:var(--ink2);font-weight:650;font-size:14px}
+ .seg button.on{background:var(--grad);color:#fff;border-color:transparent}
+ /* tabs */
+ .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;
+   background:#0c1220;border-top:1px solid var(--grid);padding:8px 6px calc(env(safe-area-inset-bottom) + 8px)}
+ .tabbar button{flex:1;background:none;border:0;color:var(--muted);font-size:11px;font-weight:600;
+   display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;transition:color .2s ease}
+ .tabbar button .ic{font-size:20px;transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+ .tabbar button.on{color:var(--acc)} .tabbar button.on .ic{transform:translateY(-2px) scale(1.16)}
+ .pane{display:none;will-change:opacity,transform}
+ .pane.on{display:block;animation:paneIn .42s cubic-bezier(.22,.61,.36,1)}
+ @keyframes paneIn{0%{opacity:0;transform:translateY(14px) scale(.985)}
+   55%{opacity:1}100%{opacity:1;transform:none}}
+ @media (prefers-reduced-motion:reduce){.pane.on{animation:none}}
+ /* tables/lists */
+ .tx{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--grid)}
+ .tx:last-child{border-bottom:0}
+ .tx .d{flex:1;min-width:0}
+ .tx .d .m{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tx .d .s{color:var(--muted);font-size:12px}
+ .tx .amt{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+ .tx .amt.in{color:var(--good)} .tx .amt.out{color:var(--bad)}
+ .tx .del{color:var(--muted);background:none;border:0;font-size:18px;padding:4px 6px}
+ .pill{display:inline-block;background:#0e1626;border:1px solid var(--grid2);border-radius:20px;
+   padding:1px 8px;font-size:11px;color:var(--muted)}
+ /* donut */
+ .donutwrap{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+ .legend{flex:1;min-width:160px}
+ .legend .li{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 8px;border-radius:9px;
+   cursor:pointer;transition:background .15s ease}
+ .legend .li:active{background:#0e1626}
+ .legend .li.sel{background:#0e1626;font-weight:700;color:var(--ink)}
+ .legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
+ .legend .lv{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+ /* budgets */
+ .brow{padding:12px 0;border-bottom:1px solid var(--grid)}
+ .brow:last-child{border-bottom:0}
+ .brow .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+ .brow .bar{height:8px;border-radius:5px;background:#0e1626;margin-top:7px;overflow:hidden}
+ .brow .bar i{display:block;height:100%;border-radius:5px}
+ .tgt{width:88px;text-align:right;font-weight:700;padding:6px 8px;font-size:14px}
+ .tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+ .tag.over{background:rgba(248,81,73,.16);color:#ff9d97}
+ .tag.near{background:rgba(240,160,75,.16);color:#f0c07b}
+ .tag.under{background:rgba(63,185,80,.16);color:#7ee787}
+ /* invest */
+ .ic{border:1px solid var(--grid);border-radius:14px;padding:14px;background:var(--card2);margin-bottom:10px}
+ .ic .h{display:flex;justify-content:space-between;gap:8px;align-items:center}
+ .ic p{color:var(--ink2);font-size:13.5px;margin:6px 0}
+ .ic ul{margin:6px 0;padding-left:18px;color:var(--ink2);font-size:13px}
+ .risk{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase}
+ .risk.low{background:rgba(63,185,80,.16);color:#7ee787}
+ .risk.med{background:rgba(240,160,75,.16);color:#f0c07b}
+ .risk.high{background:rgba(248,81,73,.16);color:#ff9d97}
+ .ic .h h3{font-size:15px;margin:0}
+ .invintro{color:var(--ink2);font-size:14px;margin:0 0 6px}
+ .reviewed{color:var(--muted);font-size:11.5px;margin-top:2px}
+ .ic .expander{margin-top:10px;width:100%;background:#0e1626;border:1px solid var(--grid2);color:var(--acc);
+   border-radius:12px;padding:12px;font-size:13.5px;font-weight:700;cursor:pointer}
+ .ic .expander:active{transform:scale(.99)}
+ .ic .more{margin-top:10px;border-top:1px dashed var(--grid2);padding-top:8px;animation:paneIn .3s ease}
+ .ic .more h4{margin:10px 0 5px;font-size:12.5px;color:var(--ink)}
+ .ic .formula{background:#0d131f;border:1px solid var(--grid2);border-radius:10px;padding:11px 12px;
+   font-size:12.5px;color:var(--ink2);line-height:1.7;font-variant-numeric:tabular-nums}
+ .ic .formula b{color:var(--acc)}
+ .ic .best{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+ .ic .best .chip{font-size:12px;background:#101a2e;border:1px solid var(--grid2);border-radius:9px;
+   padding:4px 10px;color:var(--ink);font-weight:600}
+ .disc{background:rgba(240,160,75,.10);border:1px solid rgba(240,160,75,.35);color:#f0c07b;
+   border-radius:12px;padding:12px;font-size:12px;margin-top:10px}
+ .msg{padding:11px 13px;border-radius:12px;margin:10px 0;font-size:14px;display:none}
+ .msg.ok{background:rgba(63,185,80,.14);border:1px solid rgba(63,185,80,.5);color:#7ee787;display:block}
+ .msg.err{background:rgba(248,81,73,.14);border:1px solid rgba(248,81,73,.5);color:#ff9d97;display:block}
+ /* lock screen */
+ /* floating add button */
+ .fab{position:fixed;right:18px;bottom:82px;z-index:50;width:60px;height:60px;border-radius:50%;border:0;
+   background:var(--grad);color:#fff;font-size:30px;line-height:1;cursor:pointer;
+   box-shadow:0 14px 28px rgba(124,157,255,.55);display:grid;place-items:center;
+   transition:transform .15s cubic-bezier(.2,.7,.2,1)}
+ .fab:active{transform:scale(.92)}
+ /* monthly trend */
+ #trend{display:flex;gap:10px;align-items:flex-end;overflow-x:auto;padding-top:6px}
+ .tbar{flex:1;min-width:44px;text-align:center}
+ .tbar .tb{height:132px;display:flex;align-items:flex-end;justify-content:center}
+ .tbar .tb i{display:block;width:66%;border-radius:8px 8px 3px 3px;background:linear-gradient(180deg,#7c9dff,#c07bff);
+   transition:opacity .15s ease}
+ .tbar.sel .tb i{box-shadow:0 0 0 2px rgba(124,157,255,.6)} .tbar .tb i:active{opacity:.75}
+ .tbar .tm{font-size:11px;color:var(--muted);margin-top:6px}
+ .tbar .tv{font-size:11px;color:var(--ink2);font-weight:700;font-variant-numeric:tabular-nums}
+ /* top categories (horizontal) */
+ .hrow{display:flex;align-items:center;gap:9px;padding:6px 0}
+ .hrow .hl{width:118px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink2)}
+ .hrow .htrack{flex:1;height:13px;background:#0e1626;border-radius:7px;overflow:hidden}
+ .hrow .htrack i{display:block;height:100%;border-radius:7px;transition:width .3s ease}
+ .hrow .hv{width:66px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink)}
+ /* income vs expenses grouped */
+ #inout{display:flex;gap:10px;align-items:flex-end;overflow-x:auto;padding-top:6px}
+ .iobar{flex:1;min-width:42px;text-align:center}
+ .iobar .cols{height:120px;display:flex;align-items:flex-end;justify-content:center;gap:4px}
+ .iobar .cols i{width:10px;border-radius:5px 5px 2px 2px}
+ .iobar .cols .cin{background:linear-gradient(180deg,#37d399,#2bb583)}
+ .iobar .cols .cout{background:linear-gradient(180deg,#ff9d97,#ff6b6b)}
+ .iobar .m{font-size:11px;color:var(--muted);margin-top:6px}
+ .iolegend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+ .iolegend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+ #lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;
+   background-image:radial-gradient(900px 520px at 50% -10%,rgba(192,123,255,.20),transparent 70%)}
+ #lock .box{width:86%;max-width:340px;text-align:center;background:var(--card);border:1px solid var(--grid);
+   border-radius:20px;padding:30px 22px}
+ #lock .logo{width:56px;height:56px;border-radius:16px;margin:0 auto 14px;font-size:28px}
+ #lock input{text-align:center;letter-spacing:.5em;font-size:26px;margin-top:6px}
+ #lock .e{color:#ff9d97;font-size:13px;min-height:18px;margin-top:8px}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock">
+  <div class="box">
+    <div class="logo" style="background:var(--grad);display:grid;place-items:center;color:#fff">₣</div>
+    <h1 id="lockTitle">Finance</h1>
+    <div class="sub" id="lockSub">Enter your PIN</div>
+    <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="••••" maxlength="12">
+    <div class="e" id="pinErr"></div>
+    <button class="btn" id="pinBtn">Unlock</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="wrap" id="app" style="display:none">
+  <div class="head">
+    <div class="brand"><div class="logo">₣</div><div><h1>Finance</h1><div class="sub" id="period"></div></div></div>
+    <div style="display:flex;gap:8px">
+      <a class="lock" id="setBtn">⚙️</a>
+      <a class="lock" id="lockBtn">🔒</a>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="pane on" id="p-overview">
+    <button class="btn add homeadd" data-t="add">Add expense</button>
+    <div class="card">
+      <div class="kpis" id="kpis"></div>
+    </div>
+    <div class="card">
+      <h2>🕒 Recent</h2>
+      <div id="recent"></div>
+    </div>
+  </section>
+
+  <!-- ADD -->
+  <section class="pane" id="p-add">
+    <div class="card">
+      <h2>Add expense</h2>
+      <div class="msg" id="addMsg"></div>
+      <label>Add expense — paste your bank SMS, then tap Read &amp; predict</label>
+      <textarea id="sms" placeholder="e.g. Your a/c XXXX debited OMR 3.500 at TALABAT on 17-08-2026"></textarea>
+      <button class="btn sec" id="readSms">✨ Read &amp; predict category</button>
+      <div class="seg" id="dir"><button data-dir="out" class="on">− Money out</button><button data-dir="in">+ Money in</button></div>
+      <label>Amount (OMR)</label>
+      <input id="amt" type="text" inputmode="decimal" placeholder="0.000">
+      <label>Description</label>
+      <input id="desc" type="text" placeholder="Merchant / note">
+      <label>Category — the app predicts it; edit if it's off</label>
+      <select id="cat"></select>
+      <label>Date</label>
+      <input id="date" type="date">
+      <button class="btn" id="saveTx">Add expense</button>
+    </div>
+    <div class="card">
+      <h2>📜 All transactions</h2>
+      <div id="txlist"></div>
+    </div>
+  </section>
+
+  <!-- BUDGETS -->
+  <section class="pane" id="p-budgets">
+    <div class="card">
+      <h2>🎯 Monthly plan — based on your income</h2>
+      <div id="bincome" style="margin-bottom:10px"></div>
+      <div class="sub" id="bmonth" style="margin-bottom:6px"></div>
+      <div id="budgets"></div>
+    </div>
+  </section>
+
+  <!-- GRAPHS & TRENDS -->
+  <section class="pane" id="p-graphs">
+    <div class="card">
+      <h2>📊 Spending by category <span class="sub" style="text-transform:none;letter-spacing:0;font-weight:400">· tap a slice</span></h2>
+      <div class="donutwrap"><div id="donut"></div><div class="legend" id="legend"></div></div>
+    </div>
+    <div class="card">
+      <h2>🏆 Top categories</h2>
+      <div id="topcats"></div>
+    </div>
+    <div class="card">
+      <h2>📈 Monthly spending trend</h2>
+      <div id="trend"></div>
+    </div>
+    <div class="card">
+      <h2>💚 Income vs expenses</h2>
+      <div id="inout"></div>
+      <div class="iolegend"><span><b class="cin" style="background:#37d399"></b>Income</span><span><b class="cout" style="background:#ff6b6b"></b>Expenses</span></div>
+    </div>
+    <div class="card">
+      <h2>💹 Balance over time</h2>
+      <div id="baltrend"></div>
+    </div>
+    <div class="card">
+      <h2>✨ Insights</h2>
+      <div id="insights"></div>
+    </div>
+  </section>
+
+  <!-- INVEST -->
+  <section class="pane" id="p-invest">
+    <div class="card">
+      <h2>💡 Save &amp; invest in Oman</h2>
+      <p class="invintro">Turn the money that leaks out each month into savings that grow. Below are the
+        main ways people in Oman put small amounts to work — with indicative figures.</p>
+      <div class="kpis" id="invKpis"></div>
+      <p class="sub" id="invLine" style="margin-top:10px"></p>
+      <div class="reviewed" id="invReviewed"></div>
+    </div>
+    <div class="card">
+      <h3>How to start (Oman)</h3>
+      <ul class="ic" style="border:0;background:none;padding:0;margin:0;list-style:none">
+        <li class="sub" style="margin:4px 0">1. Keep 3–6 months of expenses in bank savings first (your safety net).</li>
+        <li class="sub" style="margin:4px 0">2. To buy Omani shares: open a brokerage account and an <b>MCD investor number</b> (Muscat Clearing &amp; Depository).</li>
+        <li class="sub" style="margin:4px 0">3. To buy global ETFs: open an account with an international broker available to Oman residents.</li>
+        <li class="sub" style="margin:4px 0">4. Invest a fixed small amount every month (dollar-cost averaging) and let it compound.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>🧮 Return calculator</h2>
+      <label>What do you want to work out?</label>
+      <select id="calcType">
+        <option value="yield">🏠 Rental yield (real estate)</option>
+        <option value="stock">📈 Stock total return</option>
+        <option value="div">💵 Dividend yield</option>
+        <option value="cagr">📊 CAGR (annual growth)</option>
+        <option value="fixed">🧾 Deposit / Sukuk (fixed)</option>
+        <option value="fv">🐖 Monthly savings (future value)</option>
+      </select>
+      <div id="calcInputs"></div>
+      <div id="calcResult" class="formula" style="margin-top:12px;display:none"></div>
+    </div>
+    <div id="invCards"></div>
+    <div class="disc"><b>Educational information only — not financial advice.</b> Company and project names
+      are examples, not recommendations. Prices, dividend yields, rental yields, deposit rates and eligibility
+      change frequently and are indicative only — always check the current figures with your bank, a licensed
+      broker, or an adviser before investing. Capital can go down as well as up.</div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="pane" id="p-settings">
+    <div class="card">
+      <h2>⚙️ Settings</h2>
+      <div class="msg" id="setMsg"></div>
+      <label>Monthly income (OMR)</label>
+      <input id="income" type="text" inputmode="decimal" placeholder="1000">
+      <button class="btn sec" id="saveIncome">Save income</button>
+      <label style="margin-top:16px">Starting balance (OMR)</label>
+      <input id="opening" type="text" inputmode="decimal" placeholder="0.000">
+      <button class="btn sec" id="saveOpening">Save starting balance</button>
+      <label style="margin-top:16px">Change PIN (leave blank to keep)</label>
+      <input id="newpin" type="password" inputmode="numeric" placeholder="new PIN">
+      <button class="btn sec" id="savePin">Update PIN</button>
+      <button class="btn sec" id="backup" style="margin-top:16px">💾 Backup — save all my data</button>
+      <button class="btn sec" id="restoreBtn" style="margin-top:10px">📥 Restore — load a backup</button>
+      <input id="restoreFile" type="file" accept="application/json,.json,.txt" style="display:none">
+      <button class="btn sec" id="exportCsv" style="margin-top:16px">⬇ Export CSV</button>
+      <button class="btn sec" id="wipe" style="margin-top:10px;color:#ff9d97;border-color:rgba(248,81,73,.4)">Erase all data</button>
+      <p class="sub" style="margin-top:12px">All data is stored only in this phone's browser — nothing is
+        uploaded anywhere. Tip: tap <b>Backup</b> now and then, and after you <b>Add to Home Screen</b> use
+        <b>Restore</b> once to bring your data across. That's also how you recover if iOS ever clears storage.</p>
+    </div>
+  </section>
+</div>
+
+<!-- TAB BAR -->
+<div class="tabbar" id="tabbar" style="display:none">
+  <button data-t="overview" class="on"><span class="ic">🏠</span>Overview</button>
+  <button data-t="budgets"><span class="ic">🎯</span>Budgets</button>
+  <button data-t="graphs"><span class="ic">📈</span>Trends</button>
+  <button data-t="invest"><span class="ic">💡</span>Invest</button>
+</div>
+
+<script>
+"use strict";
+var CUR="OMR";
+var CATS=["Rent/Housing","Electricity","Water","Phone bill","Utilities","Groceries","Dining/Fun",
+ "Transportation","Car Finance","Subscriptions","Shopping","Health","Unnecessary/Impulse",
+ "Give Back","Family support","Income/Transfers In","Transfers/Payments","Cash/ATM","Fees/Interest","Other"];
+// Budget sized to a 1000 OMR/month income: targets total 850, leaving 150 to save.
+var INCOME_DEFAULT=1000;
+var TARGETS={"Rent/Housing":240,"Electricity":25,"Water":8,"Phone bill":12,"Utilities":25,
+ "Groceries":100,"Dining/Fun":45,"Transportation":45,"Car Finance":90,"Subscriptions":10,
+ "Shopping":30,"Health":25,"Unnecessary/Impulse":15,"Give Back":20,"Family support":70,
+ "Transfers/Payments":40,"Cash/ATM":25,"Fees/Interest":8,"Other":17};
+var NOBUDGET={"Income/Transfers In":1};
+var COLORS=["#7c9dff","#ffb454","#37d399","#ffd166","#f78fb3","#5ad1e6","#c07bff","#8892b0"];
+var EMOJI={"Rent/Housing":"🏠","Electricity":"⚡","Water":"💧","Phone bill":"📱","Utilities":"🌐",
+ "Groceries":"🛒","Dining/Fun":"🍔","Transportation":"🚗","Car Finance":"🚙","Subscriptions":"🔁",
+ "Shopping":"🛍️","Health":"🏥","Unnecessary/Impulse":"🤑","Give Back":"🤝","Family support":"👨‍👩‍👧",
+ "Income/Transfers In":"💰","Transfers/Payments":"🔄","Cash/ATM":"🏧","Fees/Interest":"🧾","Other":"📦"};
+var PALETTE=["#7c9dff","#ffb454","#37d399","#ffd166","#f78fb3","#5ad1e6","#c07bff","#ff8f6b",
+ "#66e0a3","#b28dff","#ffd36b","#7ee7ff","#ff9ec7","#8affc1"];
+function emoji(c){return EMOJI[c]||"•";}
+function catLabel(c){return (EMOJI[c]?EMOJI[c]+" ":"")+c;}
+
+// ---- categorization (compact port) ----
+var PREFIX=[["mobile payment from","Income/Transfers In"],["ach inward","Income/Transfers In"],
+ ["inward payment","Income/Transfers In"],["mobile payment for","Transfers/Payments"],
+ ["credit card payment","Transfers/Payments"],["transfer ","Transfers/Payments"],
+ ["value added tax","Fees/Interest"],["oman value added tax","Fees/Interest"],
+ ["ledger fees","Fees/Interest"],["internet bill payment","Utilities"]];
+var RULES=[
+ ["Electricity",["electricity","oifc","mazoon","majan electricity","dhofar power","power bill"]],
+ ["Water",["water bill","haya water","water authority","diam"]],
+ ["Phone bill",["phone bill","mobile bill","omantel","ooredoo","airtime","top up","topup","du bill","recharge"]],
+ ["Car Finance",["car finance","auto loan","car loan","vehicle loan","national finance","muscat finance","al omaniya","taageer"]],
+ ["Give Back",["charity","donation","donate","zakat","zakah","sadaqah","red crescent","dar al atta","mosque","masjid","waqf"]],
+ ["Subscriptions",["netflix","spotify","shahid","osn","anghami","youtube","apple.com","icloud","google one",
+   "adobe","microsoft 365","chatgpt","openai","subscription","membership","renewal"]],
+ ["Groceries",["grocery","supermarket","hypermarket","carrefour","lulu","spinneys","nesto","almaya","al maya",
+   "market","mart","bakery","co-op","union coop","geant"]],
+ ["Dining/Fun",["restaurant","cafe","coffee","costa","starbucks","tim horton","kfc","mcdonald","burger","pizza",
+   "talabat","deliveroo","noon food","juice","grill","shawarma","cinema","vox","dolphin club","bistro","kitchen","sohar beach"]],
+ ["Transportation",["uber","careem","taxi","petrol","petroleum","fuel","adnoc","enoc","al maha","shell","station",
+   "salik","parking","metro","airline","flydubai","emirates","air ","flight"]],
+ ["Utilities",["internet","awasr","awaser","broadband","wifi","gas bill","utility","utilities","dewa","sewa"]],
+ ["Health",["pharmacy","hospital","clinic","medical","dental","optical","gym","fitness","barber","salon"]],
+ ["Shopping",["amazon","noon","namshi","shein","ikea","zara","electronics","sharaf","emax","mall","apparel","shoes","perfume"]],
+ ["Cash/ATM",["atm","cash withdrawal","cash wdl","withdrawal","cardless"]],
+ ["Fees/Interest",["fee","charge","vat","commission","interest","penalty"]],
+ ["Income/Transfers In",["salary","payroll","refund","reversal","cashback","dividend"]],
+ ["Family support",["family support","allowance"]],
+ ["Transfers/Payments",["transfer","remittance","western union","paypal","payment"]],
+ ["Rent/Housing",["rent","landlord","lease","apartment","ejari"]]
+];
+var IMPULSE=["talabat","deliveroo","noon food","starbucks","costa","coffee","dessert","ice cream","smoking",
+ "tobacco","vape","shein","temu","betting","casino"];
+function categorize(desc){
+ var d=(desc||"").toLowerCase();
+ for(var i=0;i<PREFIX.length;i++){ if(d.indexOf(PREFIX[i][0])===0) return PREFIX[i][1]; }
+ for(var j=0;j<RULES.length;j++){ var kw=RULES[j][1]; for(var k=0;k<kw.length;k++){ if(d.indexOf(kw[k])>=0) return RULES[j][0]; } }
+ return "Other";
+}
+function isImpulse(desc){ var d=(desc||"").toLowerCase(); for(var i=0;i<IMPULSE.length;i++) if(d.indexOf(IMPULSE[i])>=0) return true; return false; }
+
+// ---- SMS parser (port) ----
+function parseSMS(text){
+ var raw=(text||"").replace(/\s+/g," ").trim(); if(!raw) return null;
+ var m=raw.match(/(?:OMR|RO|AED|USD|SAR)\s*([0-9][0-9,]*\.?[0-9]{0,3})/i)
+      || raw.match(/([0-9][0-9,]*\.[0-9]{1,3})\s*(?:OMR|RO)/i)
+      || raw.match(/\b([0-9][0-9,]*\.[0-9]{1,3})\b/);
+ if(!m) return null;
+ var amount=parseFloat(m[1].replace(/,/g,"")); if(!(amount>0)) return null;
+ var low=raw.toLowerCase();
+ var out=/(debit|spent|withdraw|purchase|paid|payment|deducted|charged|pos )/.test(low);
+ var inc=/(credit|deposit|received|refund|salary|inward|cashback)/.test(low);
+ var income=inc&&!out;
+ var mm=raw.match(/\b(?:at|towards|to|for|@)\s+([A-Za-z0-9][A-Za-z0-9 &'\-\.\*]{2,40})/i);
+ var desc;
+ if(mm){ desc=mm[1].replace(/\s+(on|dated|ref|avl|bal|balance|a\/?c|completed).*$/i,"").trim(); }
+ if(!desc){
+   desc=raw.replace(/(?:OMR|RO|AED|USD|SAR)\s*[0-9][0-9,]*\.?[0-9]*/ig," ")
+     .replace(/[0-9][0-9,]*\.[0-9]+/g," ").replace(/\b(your|a\/?c|account|card|debited|credited|xxxx+|\d{3,})\b/ig," ")
+     .replace(/\s+/g," ").trim();
+ }
+ desc=(desc||"SMS transaction").slice(0,44);
+ var dm=raw.match(/\b(\d{4}-\d{2}-\d{2}|\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4})\b/);
+ var date=todayISO();
+ if(dm){ var d=parseDate(dm[1]); if(d) date=d; }
+ return {amount:amount, income:income, desc:desc, date:date};
+}
+function parseDate(s){
+ var p; if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+ p=s.split(/[\/-]/); if(p.length===3){ var dd=p[0],mm=p[1],yy=p[2]; if(yy.length===2) yy="20"+yy;
+   if(+dd>12){} // assume d/m/y
+   return yy+"-"+("0"+mm).slice(-2)+"-"+("0"+dd).slice(-2); }
+ return null;
+}
+function todayISO(){ var d=new Date(); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+
+// ---- storage ----
+var KEY="fin.v1", PINKEY="fin.pin";
+var S={opening:0,txns:[],budgets:{}};
+function load(){ try{ var r=localStorage.getItem(KEY); if(r) S=JSON.parse(r);}catch(e){} if(!S.budgets)S.budgets={}; if(!S.txns)S.txns=[]; if(S.income==null)S.income=INCOME_DEFAULT; }
+// A category target is your custom value if you set one; otherwise the base
+// allocation scaled to your income, so the whole distribution reflects it.
+function effTarget(c){
+ if(S.budgets[c]!=null) return S.budgets[c];
+ var scale=(S.income||INCOME_DEFAULT)/INCOME_DEFAULT;
+ return Math.round((TARGETS[c]||0)*scale);
+}
+function totalBudget(){ var s=0; CATS.forEach(function(c){ if(!NOBUDGET[c]) s+=effTarget(c); }); return s; }
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)); }
+function hashPin(p){ var h=5381; for(var i=0;i<p.length;i++){ h=((h<<5)+h+p.charCodeAt(i))>>>0; } return "h"+h; }
+
+// ---- money helpers ----
+function money(v){ return (v<0?"-":"")+Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:3,maximumFractionDigits:3})+" "+CUR; }
+function fmt(v){ return v.toLocaleString(undefined,{minimumFractionDigits:3,maximumFractionDigits:3}); }
+function chrono(){ return S.txns.slice().sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; }); }
+function totals(){
+ var inc=0,out=0; S.txns.forEach(function(t){ if(t.amount>0)inc+=t.amount; else out+=-t.amount; });
+ return {inc:inc,out:out,net:inc-out,bal:(S.opening||0)+inc-out};
+}
+function monthKey(){ var d=new Date(); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2); }
+
+// ---- rendering ----
+function el(id){ return document.getElementById(id); }
+function render(){ renderKpis(); renderDonut(); renderRecent(); renderTxList(); renderBudgets();
+ renderTopCats(); renderTrend(); renderInOut(); renderBalTrend(); renderInsights(); renderInvest();
+ el("period").textContent=S.txns.length+" transactions"; }
+function prevMonthKey(){ var d=new Date(); d.setMonth(d.getMonth()-1); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2); }
+function renderTrend(){
+ var per={}; S.txns.forEach(function(t){ if(t.amount<0){ var m=t.date.slice(0,7); per[m]=(per[m]||0)+(-t.amount); }});
+ var months=Object.keys(per).sort().slice(-6);
+ if(!months.length){ el("trend").innerHTML='<div class="sub">No spending yet — add some to see the trend.</div>'; return; }
+ var max=Math.max.apply(null,months.map(function(m){return per[m];}))||1;
+ el("trend").innerHTML=months.map(function(m,i){
+   var h=Math.round(per[m]/max*120)+8, col=PALETTE[i%PALETTE.length];
+   return '<div class="tbar"><div class="tb"><i style="height:'+h+'px;background:linear-gradient(180deg,'+col+',rgba(255,255,255,.05))" title="'+fmt(per[m])+'"></i></div>'+
+     '<div class="tm">'+m.slice(5)+'/'+m.slice(2,4)+'</div><div class="tv">'+Math.round(per[m])+'</div></div>';
+ }).join("");
+}
+function renderTopCats(){
+ var arr=catTotals();
+ if(!arr.length){ el("topcats").innerHTML='<div class="sub">No spending yet.</div>'; return; }
+ var max=arr[0].value||1, top=arr.slice(0,8);
+ el("topcats").innerHTML=top.map(function(x,i){
+   var col=COLORS[i]||PALETTE[i%PALETTE.length], w=Math.max(4,x.value/max*100);
+   return '<div class="hrow"><div class="hl">'+emoji(x.label)+' '+esc(x.label)+'</div>'+
+     '<div class="htrack"><i style="width:'+w+'%;background:'+col+'"></i></div>'+
+     '<div class="hv">'+fmt(x.value)+'</div></div>';
+ }).join("");
+}
+function renderInOut(){
+ var pin={},pout={}; S.txns.forEach(function(t){ var m=t.date.slice(0,7);
+   if(t.amount>0)pin[m]=(pin[m]||0)+t.amount; else pout[m]=(pout[m]||0)+(-t.amount); });
+ var mset={}; Object.keys(pin).forEach(function(k){mset[k]=1;}); Object.keys(pout).forEach(function(k){mset[k]=1;});
+ var months=Object.keys(mset).sort().slice(-6);
+ if(!months.length){ el("inout").innerHTML='<div class="sub">No data yet.</div>'; return; }
+ var max=1; months.forEach(function(m){ max=Math.max(max,pin[m]||0,pout[m]||0); });
+ el("inout").innerHTML=months.map(function(m){
+   var hi=Math.round((pin[m]||0)/max*112)+2, ho=Math.round((pout[m]||0)/max*112)+2;
+   return '<div class="iobar"><div class="cols">'+
+     '<i class="cin" style="height:'+hi+'px" title="in '+fmt(pin[m]||0)+'"></i>'+
+     '<i class="cout" style="height:'+ho+'px" title="out '+fmt(pout[m]||0)+'"></i></div>'+
+     '<div class="m">'+m.slice(5)+'</div></div>';
+ }).join("");
+}
+function renderBalTrend(){
+ var list=chrono();
+ if(list.length<2){ el("baltrend").innerHTML='<div class="sub">Add a few transactions to see your balance trend.</div>'; return; }
+ var bal=S.opening||0, pts=[]; list.forEach(function(t){ bal+=t.amount; pts.push(bal); });
+ var mn=Math.min.apply(null,pts), mx=Math.max.apply(null,pts), range=(mx-mn)||1, W=300,H=96,n=pts.length;
+ var co=pts.map(function(v,i){ return [(i/(n-1))*W, H-8-((v-mn)/range)*(H-16)]; });
+ var line=co.map(function(c,i){ return (i?'L':'M')+c[0].toFixed(1)+' '+c[1].toFixed(1); }).join(' ');
+ var area=line+' L'+W+' '+H+' L0 '+H+' Z';
+ el("baltrend").innerHTML='<svg width="100%" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="height:104px;display:block">'+
+   '<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c9dff" stop-opacity=".38"/><stop offset="1" stop-color="#7c9dff" stop-opacity="0"/></linearGradient></defs>'+
+   '<path d="'+area+'" fill="url(#bg)"/><path d="'+line+'" fill="none" stroke="#7c9dff" stroke-width="2.5" stroke-linejoin="round"/>'+
+   '<circle cx="'+co[n-1][0].toFixed(1)+'" cy="'+co[n-1][1].toFixed(1)+'" r="3.5" fill="#c07bff"/></svg>'+
+   '<div class="sub" style="text-align:right;margin-top:4px">now: '+fmt(pts[n-1])+' '+CUR+'</div>';
+}
+function renderInsights(){
+ var arr=catTotals(), big=arr[0];
+ var mk=monthKey(), pm=prevMonthKey(), cur=0,pv=0;
+ S.txns.forEach(function(t){ if(t.amount<0){ var m=t.date.slice(0,7); if(m===mk)cur+=-t.amount; else if(m===pm)pv+=-t.amount; }});
+ if(!S.txns.length){ el("insights").innerHTML='<div class="sub">Add expenses to unlock insights. 🚀</div>'; return; }
+ var html="";
+ if(big){ html+='<div class="tx"><div class="d"><div class="m">'+emoji(big.label)+' Biggest category</div>'+
+   '<div class="s">'+esc(catLabel(big.label))+'</div></div><div class="amt out">'+fmt(big.value)+'</div></div>'; }
+ var diff=cur-pv, arrow=diff>0?"▲":diff<0?"▼":"◦", col=diff>0?"out":"in";
+ html+='<div class="tx"><div class="d"><div class="m">This month vs last</div>'+
+   '<div class="s">'+mk+' vs '+pm+'</div></div><div class="amt '+col+'">'+arrow+' '+fmt(Math.abs(diff))+'</div></div>';
+ el("insights").innerHTML=html;
+}
+
+function renderKpis(){
+ var t=totals();
+ el("kpis").innerHTML=
+   kpi("💳 Balance",fmt(t.bal),"") + kpi("📈 Money in",fmt(t.inc),"g pos") +
+   kpi("📉 Money out",fmt(t.out),"r neg") + kpi("⚖️ Net",fmt(t.net),(t.net>=0?"pos":"neg"));
+}
+function kpi(l,v,cls){ var c=cls.split(" "); var box=c.filter(function(x){return x==='g'||x==='r'||x==='o';}).join(" ");
+ var vc=c.filter(function(x){return x==='pos'||x==='neg';}).join(" ");
+ return '<div class="kpi '+box+'"><div class="l">'+l+'</div><div class="v '+vc+'">'+v+'</div></div>'; }
+
+function catTotals(){
+ var per={}; S.txns.forEach(function(t){ if(t.amount<0){ per[t.category]=(per[t.category]||0)+(-t.amount); } });
+ var arr=Object.keys(per).map(function(k){ return {label:k,value:per[k]}; });
+ arr.sort(function(a,b){ return b.value-a.value; });
+ return arr;
+}
+var donutState={data:[],tot:0,sel:-1};
+function trunc(s,n){ return s.length>n?s.slice(0,n-1)+"…":s; }
+function renderDonut(){
+ var arr=catTotals(); var named=arr.slice(0,7), rest=arr.slice(7);
+ var data=named.map(function(x,i){ return {label:x.label,value:x.value,color:COLORS[i]}; });
+ if(rest.length){ data.push({label:"Other",value:rest.reduce(function(s,x){return s+x.value;},0),color:COLORS[7]}); }
+ donutState={data:data,tot:data.reduce(function(s,x){return s+x.value;},0),sel:-1};
+ drawDonut();
+}
+function drawDonut(){
+ var data=donutState.data,tot=donutState.tot,sel=donutState.sel;
+ if(tot<=0){ el("donut").innerHTML='<div class="sub" style="width:150px;text-align:center;padding:44px 0">No spending yet</div>'; el("legend").innerHTML=""; return; }
+ var r=60,cx=75,cy=75,C=2*Math.PI*r,off=0,svg="";
+ data.forEach(function(d,i){
+   var len=(d.value/tot)*C, sw=(i===sel)?28:20, op=(sel<0||i===sel)?1:.35;
+   svg+='<circle class="slice" data-idx="'+i+'" cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+d.color+'" '+
+        'stroke-width="'+sw+'" opacity="'+op+'" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" '+
+        'transform="rotate(-90 '+cx+' '+cy+')" style="cursor:pointer;transition:stroke-width .18s ease,opacity .18s ease"/>';
+   off+=len;
+ });
+ var top,bot;
+ if(sel>=0){ top=trunc(data[sel].label,11); bot=fmt(data[sel].value)+" · "+(data[sel].value/tot*100).toFixed(0)+"%"; }
+ else { top="Spending"; bot=fmt(tot)+" "+CUR; }
+ el("donut").innerHTML='<svg width="152" height="152" viewBox="0 0 150 150">'+svg+
+   '<circle cx="75" cy="75" r="42" fill="#151b30"/>'+
+   '<text x="75" y="71" text-anchor="middle" fill="#eef1f8" font-size="11" font-weight="700">'+esc(top)+'</text>'+
+   '<text x="75" y="89" text-anchor="middle" fill="#818bab" font-size="9.5">'+esc(bot)+'</text></svg>';
+ el("legend").innerHTML=data.map(function(d,i){ return '<div class="li'+(i===sel?' sel':'')+'" data-idx="'+i+'">'+
+   '<span class="sw" style="background:'+d.color+'"></span>'+esc(catLabel(d.label))+
+   '<span class="lv">'+fmt(d.value)+' · '+(d.value/tot*100).toFixed(0)+'%</span></div>'; }).join("");
+}
+function renderRecent(){ el("recent").innerHTML=txRows(chrono().reverse().slice(0,6),false); if(!S.txns.length)el("recent").innerHTML='<div class="sub">Nothing yet. Tap Add.</div>'; }
+function renderTxList(){ el("txlist").innerHTML=txRows(chrono().reverse(),true) || '<div class="sub">Nothing yet.</div>'; }
+function txRows(list,del){
+ return list.map(function(t){
+  var cls=t.amount<0?"out":"in", sign=t.amount<0?"−":"+";
+  return '<div class="tx"><div class="d"><div class="m">'+esc(t.desc)+'</div>'+
+    '<div class="s">'+t.date+' · <span class="pill">'+catLabel(t.category)+'</span></div></div>'+
+    '<div class="amt '+cls+'">'+sign+fmt(Math.abs(t.amount))+'</div>'+
+    (del?'<button class="del" data-id="'+t.id+'">✕</button>':'')+'</div>';
+ }).join("");
+}
+function renderBudgets(){
+ var tb=totalBudget(), inc=S.income||0, sav=inc-tb;
+ el("bincome").innerHTML='<div class="kpis">'+
+   kpi("💰 Income /mo",fmt(inc),"g")+kpi("🎯 Budgeted",fmt(tb),"o")+
+   kpi((sav>=0?"🐖 Left to save":"⚠️ Over budget by"),fmt(Math.abs(sav)),(sav>=0?"g pos":"r neg"))+'</div>';
+ el("bmonth").textContent="Targets scale with your income (⚙️ Settings). "+monthKey()+" spending vs target:";
+ var mk=monthKey(), per={};
+ S.txns.forEach(function(t){ if(t.amount<0 && t.date.slice(0,7)===mk){ per[t.category]=(per[t.category]||0)+(-t.amount); } });
+ var cats=CATS.filter(function(c){ return !NOBUDGET[c]; });
+ cats.sort(function(a,b){ return (per[b]||0)-(per[a]||0); });
+ el("budgets").innerHTML=cats.map(function(c){
+   var spent=per[c]||0, tgt=effTarget(c);
+   var pct=tgt?Math.min(100,spent/tgt*100):0;
+   var st=!tgt?"":spent>tgt?"over":spent>=0.8*tgt?"near":"under";
+   var col=st==="over"?"#f85149":st==="near"?"#f0a04b":"#3fb950";
+   return '<div class="brow"><div class="t"><b>'+catLabel(c)+'</b>'+
+     '<span>'+(st?'<span class="tag '+st+'">'+(st==="over"?"Over":st==="near"?"Near":"On track")+'</span> ':'')+
+     '<input class="tgt" data-cat="'+c+'" inputmode="decimal" value="'+(tgt?tgt:"")+'"></span></div>'+
+     '<div class="sub">'+fmt(spent)+' / '+fmt(tgt)+' '+CUR+'</div>'+
+     '<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></div></div>';
+ }).join("");
+}
+function renderInvest(){
+ var roundup=0,flagged=0;
+ S.txns.forEach(function(t){ if(t.amount<0){ var o=-t.amount; roundup+=Math.ceil(o)-o; if(isImpulse(t.desc))flagged+=o; } });
+ var gap=(S.income||0)-totalBudget();          // what your 1000-income plan leaves to save
+ var monthly=Math.max(gap,flagged,roundup); if(monthly<5)monthly=5;
+ el("invKpis").innerHTML=kpi("Round-up spare",fmt(roundup),"")+kpi("Impulse spend",fmt(flagged),"o")+
+   kpi("Suggested /mo",fmt(monthly),"g")+kpi("10yr @5%",Math.round(fv(monthly,0.05,10)).toLocaleString(),"");
+ el("invLine").textContent="Investing "+Math.round(monthly)+" "+CUR+"/mo could grow to about "+
+   Math.round(fv(monthly,0.05,10)).toLocaleString()+" "+CUR+" in 10 years at 5% (illustrative).";
+ el("invReviewed").textContent="Indicative figures for Oman · reviewed Aug 2026 · verify current rates before investing.";
+ var rl={low:"Low risk",med:"Medium",high:"Higher risk"};
+ el("invCards").innerHTML=INVEST.map(function(c,i){
+   var h='<div class="ic"><div class="h"><h3>'+c.t+'</h3><span class="risk '+c.r+'">'+(rl[c.r]||c.r)+'</span></div>'+
+     (c.ret?'<p class="sub" style="color:var(--acc)"><b>Typical return:</b> '+c.ret+'</p>':'')+
+     '<p>'+c.p+'</p>'+(c.l?'<ul>'+c.l.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul>':'');
+   if(c.more){
+     var mm=c.more, body='';
+     if(mm.best&&mm.best.length){ body+='<h4>'+esc(mm.bestLabel||'Best picks')+'</h4><div class="best">'+
+       mm.best.map(function(b){return '<span class="chip">'+esc(b)+'</span>';}).join("")+'</div>'; }
+     if(mm.calc){ body+='<h4>💡 How to calculate the return</h4><div class="formula">'+mm.calc+'</div>'; }
+     if(mm.note){ body+='<p class="sub">'+mm.note+'</p>'; }
+     h+='<button class="expander" data-inv="'+i+'">▾ Best picks & return math</button>'+
+        '<div class="more" id="more-'+i+'" style="display:none">'+body+'</div>';
+   }
+   return h+'</div>';
+ }).join("");
+}
+function fv(m,rate,yrs){ var r=rate/12,n=yrs*12; return r===0?m*n:m*((Math.pow(1+r,n)-1)/r); }
+var INVEST=[
+ {t:"🏦 Bank savings & Al Mazyona",r:"low",ret:"~0% (prize draws) to modest",
+  p:"The safest home for your emergency fund. Your account is an Al Mazyona prize-linked savings account at Bank Muscat: balances earn entries into regular cash prize draws instead of interest (Shariah-friendly). Other banks run similar schemes.",
+  l:["Instant access; capital is protected","Keep 3–6 months of expenses here before investing","No fixed return — you're paid in prize chances"],
+  more:{bestLabel:"Where to keep it",best:["Al Mazyona (Bank Muscat)","Bank Dhofar Mazaya","NBO prize savings","Fixed/term deposit"],
+   calc:"Term deposit interest = Principal × annual rate × (months ÷ 12)<br>e.g. 1,000 × 3% × 12/12 = <b>30 OMR/year</b><br><br>Prize savings return is variable — you only gain if you win a draw, but your capital never falls.",
+   note:"This is for safety, not growth. Park your emergency fund here first."}},
+ {t:"🧾 Term deposits & Sukuk",r:"low",ret:"~fixed, low single digits",
+  p:"Lock money for a set period for a fixed, predictable return. Sukuk are the Shariah-compliant version of bonds; Oman issues Government Development Bonds and Sovereign Sukuk that pay periodic income and return your capital at maturity.",
+  l:["Lower risk than stocks; returns are steadier","Term deposits via any Omani bank","Ask your bank/broker which sukuk issues are open"],
+  more:{bestLabel:"Instruments",best:["Govt Development Bonds","Sovereign Sukuk","Bank term deposit"],
+   calc:"Yield = Annual profit payment ÷ price × 100<br>e.g. 50 OMR profit on a 1,000 sukuk = <b>5.0% yield</b><br><br>Hold to maturity and you get your full capital back plus the profit payments along the way.",
+   note:"Great for money you'll need in 1–3 years."}},
+ {t:"📈 Oman stocks (MSX)",r:"med",ret:"dividends often ~4–7% + price moves",
+  p:"Buy shares of Omani companies on the Muscat Stock Exchange (MSX). Open a brokerage account and an MCD investor number, then trade. Omani blue-chips are known for paying regular dividends, and the MSX30 index tracks the largest names.",
+  l:["Banking & finance: Bank Muscat, Sohar International, Bank Dhofar","Energy & utilities: OQ Gas Networks, OQ Base Industries, Oman Cement","Telecom: Omantel, Ooredoo Oman","Prices rise and fall — diversify and research each company"],
+  more:{bestLabel:"Well-known MSX blue chips (examples)",
+   best:["Bank Muscat","OQ Gas Networks","Omantel","Sohar Int'l","Bank Dhofar","Nat'l Bank of Oman","Ooredoo Oman","Oman Cement","Renaissance"],
+   calc:"Dividend yield = Annual dividend ÷ share price × 100<br>Total return = ((sell − buy) + dividends) ÷ buy × 100<br>e.g. buy 1.000, sell 1.120, dividend 0.060<br>→ (0.120 + 0.060) ÷ 1.000 = <b>18%</b><br>Multi-year: CAGR = (end ÷ start) ^ (1 ÷ years) − 1",
+   note:"Dividend-paying blue chips are the popular Omani choice. Examples only, not advice — verify current prices and dividends."}},
+ {t:"🌍 Global stocks & ETFs",r:"med",ret:"~7% long-run average (varies)",
+  p:"For diversification beyond Oman, low-cost index ETFs (e.g. an S&P 500 or all-world tracker) spread your money across hundreds of companies in a single buy. Fractional shares let you start with just a few rials and add every month.",
+  l:["Access via international brokers open to Oman residents","Very low fees vs actively managed funds","Best held for the long term through ups and downs"],
+  more:{bestLabel:"Common core ETFs (examples)",best:["S&P 500 index ETF","FTSE All-World ETF","MSCI World ETF","Nasdaq-100 ETF"],
+   calc:"Total return = ((end price − start) + dividends) ÷ start × 100<br>CAGR = (end ÷ start) ^ (1 ÷ years) − 1<br>e.g. 10,000 → 20,000 over 10 yrs → CAGR ≈ <b>7.2%</b><br>Then subtract the expense ratio (e.g. 0.1%/yr) — lower is better.",
+   note:"Broad index ETFs beat most stock-pickers over the long run."}},
+ {t:"🏠 Real estate (freehold)",r:"med",ret:"rental yields ~5–8% (area-dependent)",
+  p:"Property for rental income or resale. Foreigners can own freehold in designated Integrated Tourism Complexes (ITCs). It's a larger commitment — factor in service fees, maintenance, vacancy and lower liquidity.",
+  l:["Off-plan can lower the entry price but adds risk","Budget 3–5% for transaction/registration costs","Keep a cash buffer for maintenance & empty months"],
+  more:{bestLabel:"Freehold areas (ITCs)",best:["Al Mouj Muscat","Muscat Bay","Jebel Sifah","Hawana Salalah","Saraya Bandar Jissah"],
+   calc:"Gross rental yield = Annual rent ÷ price × 100<br>e.g. 3,600 rent on 60,000 = <b>6.0%</b><br>Net yield = (rent − service fees, upkeep, vacancy) ÷ price × 100<br>Cash-on-cash = Annual cash flow ÷ cash you invested × 100<br>Total ROI = (rent + price appreciation − costs) ÷ invested × 100<br>Cap rate = Net operating income ÷ property value × 100",
+   note:"Rentals give income + possible appreciation, but you can't sell a room quickly — plan for low liquidity."}},
+ {t:"🏢 REITs (listed property)",r:"med",ret:"income distributions, market-priced",
+  p:"Real Estate Investment Trusts let you own income-producing property through shares on the MSX — a much smaller entry ticket than buying a whole unit, and easier to sell.",
+  l:["Pay out most rental income as distributions","Buy/sell like any share on the MSX","A simple way to add property to a small portfolio"],
+  more:{bestLabel:"MSX REITs (examples)",best:["Aman REIT","Al Ahli REIT"],
+   calc:"Distribution yield = Annual distribution ÷ unit price × 100<br>Total return = ((sell − buy) + distributions) ÷ buy × 100<br>e.g. buy 0.100, dividend 0.008/yr → yield <b>8%</b>",
+   note:"Property income without the paperwork of owning a whole unit."}},
+ {t:"🪙 Gold & commodities",r:"med",ret:"tracks gold price; no income",
+  p:"A common inflation hedge in the region. Hold physical gold, or gold-backed funds/ETFs for easier storage and selling. Gold pays no dividend — its value comes only from price changes.",
+  l:["Physical: reputable dealers (mind making charges)","Gold ETFs via a broker for convenience","Use as a small diversifier, not your whole plan"],
+  more:{bestLabel:"Ways to hold it",best:["Physical bars/coins","Gold ETF","Gold savings plan"],
+   calc:"Return = (sell price − buy price) ÷ buy price × 100<br>e.g. buy 22 OMR/g, sell 25 → (3 ÷ 22) = <b>13.6%</b><br>No dividends — subtract making charges/premiums on physical gold.",
+   note:"Keep it a small slice (say 5–10%) of your total plan."}},
+ {t:"📊 Mutual funds & robo-advisors",r:"med",ret:"depends on the fund's mix",
+  p:"Hands-off, professionally managed baskets. Omani banks and asset managers offer mutual funds, including Shariah-compliant options; robo-advisors build a diversified portfolio for small regular contributions.",
+  l:["Good if you don't want to pick individual shares","Compare fees — managed costs more than index ETFs","Match the fund's risk level to your time horizon"],
+  more:{bestLabel:"Types to look at",best:["Bank Muscat funds","Shariah equity fund","Balanced fund","Robo portfolio"],
+   calc:"Return = ((end NAV − start NAV) + distributions) ÷ start NAV × 100<br>Net return = gross return − expense ratio (often 1–2%/yr)<br>e.g. 8% gross − 1.5% fee = <b>6.5% net</b>",
+   note:"Fees compound too — a 1% higher fee can cost years of growth."}},
+ {t:"⏳ Retirement / long-term",r:"low",ret:"compounding is the point",
+  p:"The longer money compounds, the more the gap between 2% and 8% matters. A steady monthly amount left untouched for a decade or two does the heavy lifting.",
+  l:["Automate a monthly transfer so you never skip","Reinvest dividends and distributions","Raise the amount whenever your income rises"],
+  more:{bestLabel:"Simple long-term mix",best:["Index ETF core","Some sukuk/bonds","Small gold slice"],
+   calc:"Future value of monthly savings:<br>FV = PMT × [ ((1 + r) ^ n − 1) ÷ r ]<br>PMT = monthly amount, r = annual rate ÷ 12, n = months<br>e.g. 150/mo, 5%/yr, 10 yrs → ≈ <b>23,300 OMR</b>",
+   note:"Time in the market beats timing the market."}}
+];
+function esc(s){ return (s+"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+// ---- return calculator ----
+var CALC={
+ yield:{fields:[["price","Property price (OMR)"],["rent","Annual rent (OMR)"],["costs","Yearly costs (optional)"]],
+   fn:function(v){ if(!(v.price>0)) return "Enter a price above 0.";
+     var g=v.rent/v.price*100, n=(v.rent-(v.costs||0))/v.price*100;
+     return "Gross rental yield: <b>"+g.toFixed(1)+"%</b><br>Net yield (after costs): <b>"+n.toFixed(1)+"%</b>"; }},
+ stock:{fields:[["buy","Buy price"],["sell","Sell price"],["div","Dividends received (optional)"]],
+   fn:function(v){ if(!(v.buy>0)) return "Enter a buy price above 0.";
+     var r=((v.sell-v.buy)+(v.div||0))/v.buy*100;
+     return "Total return: <b>"+r.toFixed(1)+"%</b>"; }},
+ div:{fields:[["dps","Annual dividend / share"],["price","Share price"]],
+   fn:function(v){ if(!(v.price>0)) return "Enter a share price above 0.";
+     return "Dividend yield: <b>"+(v.dps/v.price*100).toFixed(2)+"%</b>"; }},
+ cagr:{fields:[["start","Start value"],["end","End value"],["years","Years"]],
+   fn:function(v){ if(!(v.start>0)||!(v.years>0)) return "Start value and years must be above 0.";
+     return "CAGR (annual growth): <b>"+((Math.pow(v.end/v.start,1/v.years)-1)*100).toFixed(1)+"% / yr</b>"; }},
+ fixed:{fields:[["principal","Amount (OMR)"],["rate","Annual rate (%)"],["years","Years"]],
+   fn:function(v){ var interest=v.principal*(v.rate/100)*v.years;
+     return "Total interest: <b>"+interest.toFixed(3)+" OMR</b><br>Value at end: <b>"+(v.principal+interest).toFixed(3)+" OMR</b>"; }},
+ fv:{fields:[["pmt","Monthly amount (OMR)"],["rate","Annual return (%)"],["years","Years"]],
+   fn:function(v){ var r=v.rate/100/12, n=v.years*12, fv=(r===0)?v.pmt*n:v.pmt*((Math.pow(1+r,n)-1)/r);
+     return "Future value: <b>"+Math.round(fv).toLocaleString()+" OMR</b><br>You put in: "+Math.round(v.pmt*n).toLocaleString()+" OMR"; }}
+};
+var CALC_OPT={costs:1,div:1};
+function renderCalc(){
+ var cfg=CALC[el("calcType").value];
+ el("calcInputs").innerHTML=cfg.fields.map(function(f){
+   return '<label>'+f[1]+'</label><input class="calcf" data-k="'+f[0]+'" type="text" inputmode="decimal" placeholder="0">';
+ }).join("");
+ el("calcResult").style.display="none";
+}
+function doCalc(){
+ var cfg=CALC[el("calcType").value], v={}, ok=true;
+ [].forEach.call(document.querySelectorAll("#calcInputs .calcf"),function(inp){
+   var val=parseFloat((inp.value||"").replace(/,/g,"")); v[inp.getAttribute("data-k")]=isNaN(val)?undefined:val; });
+ cfg.fields.forEach(function(f){ if(!CALC_OPT[f[0]] && v[f[0]]==null) ok=false; });
+ var res=el("calcResult");
+ if(!ok){ res.style.display="none"; return; }
+ res.innerHTML=cfg.fn(v); res.style.display="block";
+}
+
+// ---- interactions ----
+function fillCats(){ el("cat").innerHTML='<option value="">✨ Auto-detect</option>'+CATS.map(function(c){return '<option value="'+c+'">'+catLabel(c)+'</option>';}).join(""); }
+var addDir="out";
+document.addEventListener("click",function(e){
+ var dn=e.target.closest(".donutwrap [data-idx]");
+ if(dn){ var i=+dn.getAttribute("data-idx"); donutState.sel=(donutState.sel===i?-1:i); drawDonut(); return; }
+ var ex=e.target.closest(".expander");
+ if(ex){ var iv=ex.getAttribute("data-inv"), mo=el("more-"+iv), open=mo.style.display!=="none";
+   mo.style.display=open?"none":"block"; ex.innerHTML=(open?"▾":"▴")+" Best picks & return math"; return; }
+ var t=e.target.closest("[data-t]"); if(t){ showTab(t.getAttribute("data-t")); return; }
+ var d=e.target.closest("[data-dir]"); if(d){ addDir=d.getAttribute("data-dir");
+   [].forEach.call(el("dir").children,function(b){ b.classList.toggle("on",b===d); }); return; }
+ var del=e.target.closest(".del"); if(del){ var id=del.getAttribute("data-id");
+   S.txns=S.txns.filter(function(x){return String(x.id)!==String(id);}); save(); render(); return; }
+});
+function showTab(name){
+ [].forEach.call(document.querySelectorAll(".pane"),function(p){ p.classList.toggle("on",p.id==="p-"+name); });
+ [].forEach.call(el("tabbar").children,function(b){ b.classList.toggle("on",b.getAttribute("data-t")===name); });
+ window.scrollTo(0,0);
+}
+el("readSms").addEventListener("click",function(){
+ var p=parseSMS(el("sms").value);
+ if(!p){ flash("addMsg","Couldn't find an amount in that text.","err"); return; }
+ addDir=p.income?"in":"out";
+ [].forEach.call(el("dir").children,function(b){ b.classList.toggle("on",b.getAttribute("data-dir")===addDir); });
+ el("amt").value=fmt(p.amount); el("desc").value=p.desc; el("date").value=p.date;
+ var pred=p.income?"Income/Transfers In":categorize(p.desc);
+ el("cat").value=pred;                       // AI prediction, pre-selected & editable
+ flash("addMsg","Predicted: "+catLabel(pred)+" — change it below if it's off, then tap Add. 👍","ok");
+});
+el("saveTx").addEventListener("click",function(){
+ var a=parseFloat((el("amt").value||"").replace(/,/g,"")); if(!(a>0)){ flash("addMsg","Enter an amount.","err"); return; }
+ var desc=el("desc").value.trim()||"(manual entry)";
+ var cat=el("cat").value|| (addDir==="in"?"Income/Transfers In":categorize(desc));
+ var date=el("date").value||todayISO();
+ var amount=addDir==="in"?a:-a;
+ S.txns.push({id:Date.now()+""+Math.floor(Math.random()*1000),date:date,desc:desc,amount:+amount.toFixed(3),category:cat});
+ save(); el("sms").value="";el("amt").value="";el("desc").value="";el("cat").value="";
+ flash("addMsg","Saved 🎉  "+catLabel(cat)+" · "+money(amount),"ok"); render();
+});
+document.addEventListener("change",function(e){
+ var tg=e.target.closest(".tgt"); if(tg){ var c=tg.getAttribute("data-cat"); var v=parseFloat(tg.value);
+   if(v>0)S.budgets[c]=v; else delete S.budgets[c]; save(); renderBudgets(); }
+});
+el("calcType").addEventListener("change", renderCalc);
+document.addEventListener("input",function(e){ if(e.target.closest("#calcInputs .calcf")) doCalc(); });
+el("saveIncome").addEventListener("click",function(){ S.income=parseFloat((el("income").value||"0").replace(/,/g,""))||0; save(); flash("setMsg","Income saved. 💰","ok"); render(); });
+el("saveOpening").addEventListener("click",function(){ S.opening=parseFloat((el("opening").value||"0").replace(/,/g,""))||0; save(); flash("setMsg","Saved.","ok"); render(); });
+el("savePin").addEventListener("click",function(){ var np=el("newpin").value.trim(); if(np.length<4){ flash("setMsg","PIN must be at least 4 digits.","err"); return; } localStorage.setItem(PINKEY,hashPin(np)); el("newpin").value=""; flash("setMsg","PIN updated.","ok"); });
+el("backup").addEventListener("click",function(){
+ var payload={app:"finance-monitor",v:1,exported:new Date().toISOString(),data:S,pin:localStorage.getItem(PINKEY)||null};
+ var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+ var url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url; a.download="finance-backup-"+todayISO()+".json"; a.click();
+ setTimeout(function(){URL.revokeObjectURL(url);},2000);
+ flash("setMsg","Backup file created ("+S.txns.length+" transactions). Save it somewhere safe. 💾","ok");
+});
+el("restoreBtn").addEventListener("click",function(){ el("restoreFile").click(); });
+el("restoreFile").addEventListener("change",function(){
+ var f=this.files&&this.files[0]; if(!f){ return; }
+ var rdr=new FileReader();
+ rdr.onload=function(){
+   try{
+     var obj=JSON.parse(rdr.result);
+     var d=(obj&&obj.data)?obj.data:obj;   // accept a full backup or a raw data object
+     if(!d||typeof d!=="object"||!("txns" in d)||!Array.isArray(d.txns)) throw 0;
+     if(!confirm("Replace ALL data on this device with the backup ("+d.txns.length+" transactions)? This can't be undone.")) { el("restoreFile").value=""; return; }
+     S={opening:+d.opening||0, income:(d.income==null?INCOME_DEFAULT:+d.income),
+        txns:d.txns, budgets:(d.budgets&&typeof d.budgets==="object")?d.budgets:{}};
+     save();
+     if(obj&&obj.pin){ localStorage.setItem(PINKEY,obj.pin); }
+     el("opening").value=S.opening?fmt(S.opening):""; el("income").value=S.income?fmt(S.income):"";
+     render();
+     flash("setMsg","Restored "+S.txns.length+" transactions. ✅","ok");
+   }catch(e){ flash("setMsg","That file isn't a valid Finance backup.","err"); }
+   el("restoreFile").value="";
+ };
+ rdr.readAsText(f);
+});
+el("exportCsv").addEventListener("click",function(){
+ var rows=[["date","description","amount","category"]].concat(chrono().map(function(t){return [t.date,'"'+(t.desc+"").replace(/"/g,'""')+'"',t.amount.toFixed(3),t.category];}));
+ var csv=rows.map(function(r){return r.join(",");}).join("\n");
+ var blob=new Blob([csv],{type:"text/csv"}); var url=URL.createObjectURL(blob);
+ var a=document.createElement("a"); a.href=url; a.download="finance.csv"; a.click(); setTimeout(function(){URL.revokeObjectURL(url);},2000);
+});
+el("wipe").addEventListener("click",function(){ if(confirm("Erase ALL transactions and settings on this phone?")){ S={opening:0,txns:[],budgets:{}}; save(); render(); flash("setMsg","All data erased.","ok"); } });
+el("setBtn").addEventListener("click",function(){ showTab("settings"); });
+el("lockBtn").addEventListener("click",function(){ unlocked=false; el("app").style.display="none"; el("tabbar").style.display="none"; el("lock").style.display="grid"; el("pin").value=""; el("pin").focus(); });
+function flash(id,msg,cls){ var m=el(id); m.className="msg "+cls; m.textContent=msg; if(cls==="ok")setTimeout(function(){m.className="msg";},2500); }
+
+// ---- lock / boot ----
+var unlocked=false;
+function boot(){ el("app").style.display="block"; el("tabbar").style.display="flex";
+ el("lock").style.display="none";
+ fillCats(); renderCalc(); el("date").value=todayISO();
+ el("opening").value=S.opening?fmt(S.opening):""; el("income").value=S.income?fmt(S.income):"";
+ render(); }
+function tryUnlock(){
+ var stored=localStorage.getItem(PINKEY); var v=el("pin").value.trim();
+ if(!stored){ if(v.length<4){ el("pinErr").textContent="Choose a PIN of at least 4 digits."; return; }
+   localStorage.setItem(PINKEY,hashPin(v)); unlocked=true; boot(); return; }
+ if(hashPin(v)===stored){ unlocked=true; boot(); } else { el("pinErr").textContent="Wrong PIN."; el("pin").value=""; }
+}
+el("pinBtn").addEventListener("click",tryUnlock);
+el("pin").addEventListener("keydown",function(e){ if(e.key==="Enter")tryUnlock(); });
+// Offline support: iOS only allows this from a secure origin (HTTPS or localhost).
+// Over plain http:// on a LAN IP the browser refuses to register it, so the app
+// only works while the server is reachable.
+if("serviceWorker" in navigator && window.isSecureContext){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+(function init(){ load();
+ if(!localStorage.getItem(PINKEY)){ el("lockTitle").textContent="Set a PIN"; el("lockSub").textContent="Create a PIN to protect your data"; el("pinBtn").textContent="Set PIN & continue"; }
+ el("pin").focus();
+})();
+</script>
+</body>
+</html>
