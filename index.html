@@ -185,6 +185,7 @@
     <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="••••" maxlength="12">
     <div class="e" id="pinErr"></div>
     <button class="btn" id="pinBtn">Unlock</button>
+    <a id="forgot" style="display:block;margin-top:14px;color:#818bab;font-size:12.5px;text-decoration:underline">Forgot PIN?</a>
   </div>
 </div>
 
@@ -328,6 +329,13 @@
       <label style="margin-top:16px">Change PIN (leave blank to keep)</label>
       <input id="newpin" type="password" inputmode="numeric" placeholder="new PIN">
       <button class="btn sec" id="savePin">Update PIN</button>
+      <button class="btn sec" id="syncBtn" style="margin-top:16px">🔄 Sync with PC</button>
+      <div class="sub" id="syncStatus" style="margin-top:6px"></div>
+      <button class="btn sec" id="exportSync" style="margin-top:16px">📤 Export for PC (send my entries)</button>
+      <button class="btn sec" id="mergeBtn" style="margin-top:10px">🔁 Merge from PC file</button>
+      <input id="mergeFile" type="file" accept="application/json,.json" style="display:none">
+      <div class="sub" style="margin-top:6px">Use these two to sync with the PC when you're not on its Wi-Fi:
+        export here → import on the PC, and download the PC's file → merge it here. Merging never deletes.</div>
       <button class="btn sec" id="backup" style="margin-top:16px">💾 Backup — save all my data</button>
       <button class="btn sec" id="restoreBtn" style="margin-top:10px">📥 Restore — load a backup</button>
       <input id="restoreFile" type="file" accept="application/json,.json,.txt" style="display:none">
@@ -786,9 +794,11 @@ el("saveTx").addEventListener("click",function(){
  var cat=el("cat").value|| (addDir==="in"?"Income/Transfers In":categorize(desc));
  var date=el("date").value||todayISO();
  var amount=addDir==="in"?a:-a;
- S.txns.push({id:Date.now()+""+Math.floor(Math.random()*1000),date:date,desc:desc,amount:+amount.toFixed(3),category:cat});
+ S.txns.push({id:"ph_"+Date.now()+Math.floor(Math.random()*1000),date:date,desc:desc,amount:+amount.toFixed(3),category:cat});
  save(); el("sms").value="";el("amt").value="";el("desc").value="";el("cat").value="";
  flash("addMsg","Saved 🎉  "+catLabel(cat)+" · "+money(amount),"ok"); render();
+ setSync(idleSyncMsg());
+ syncNow(true);   // push to the PC if it's on; otherwise it waits, nothing is lost
 });
 document.addEventListener("change",function(e){
  var tg=e.target.closest(".tgt"); if(tg){ var c=tg.getAttribute("data-cat"); var v=parseFloat(tg.value);
@@ -799,6 +809,84 @@ document.addEventListener("input",function(e){ if(e.target.closest("#calcInputs 
 el("saveIncome").addEventListener("click",function(){ S.income=parseFloat((el("income").value||"0").replace(/,/g,""))||0; save(); flash("setMsg","Income saved. 💰","ok"); render(); });
 el("saveOpening").addEventListener("click",function(){ S.opening=parseFloat((el("opening").value||"0").replace(/,/g,""))||0; save(); flash("setMsg","Saved.","ok"); render(); });
 el("savePin").addEventListener("click",function(){ var np=el("newpin").value.trim(); if(np.length<4){ flash("setMsg","PIN must be at least 4 digits.","err"); return; } localStorage.setItem(PINKEY,hashPin(np)); el("newpin").value=""; flash("setMsg","PIN updated.","ok"); });
+// ---- sync with the PC ----
+// Works when the app was opened from the PC (same origin). Entries you add
+// offline are pushed on the next successful sync.
+function syncServer(){ return (location.protocol==="http:"||location.protocol==="https:")?location.origin:""; }
+function setSync(msg){ var e=el("syncStatus"); if(e) e.textContent=msg; }
+// Entries added on the phone keep a "ph_" id until the PC has taken them.
+function pendingCount(){ var n=0; S.txns.forEach(function(t){ if(String(t.id).indexOf("ph_")===0) n++; }); return n; }
+function idleSyncMsg(){
+ var p=pendingCount();
+ if(p) return "⏳ "+p+" entr"+(p===1?"y":"ies")+" waiting — will sync when the PC is on.";
+ return S.lastSync?("Last synced "+new Date(S.lastSync).toLocaleString()):"Not synced yet.";
+}
+function syncNow(quiet){
+ var base=syncServer();
+ if(!base){ if(!quiet) setSync("Sync needs the app opened from the PC link."); return; }
+ if(!quiet) setSync("Syncing…");
+ fetch(base+"/api/sync",{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({txns:S.txns.map(function(t){
+     return {id:t.id,date:t.date,desc:t.desc,amount:t.amount,category:t.category}; })})})
+  .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+  .then(function(d){
+    if(!d||!d.txns) throw 0;
+    S.txns=d.txns.map(function(t){
+      return {id:t.id,date:t.date,desc:t.desc,amount:+t.amount,category:t.category||"Other",source:t.source}; });
+    save(); render();
+    S.lastSync=new Date().toISOString(); save();
+    setSync("✅ Synced "+d.count+" transactions"+(d.added?" ("+d.added+" sent up)":"")+" · "+new Date().toLocaleTimeString());
+  })
+  .catch(function(){ setSync(quiet?idleSyncMsg():"⚠️ PC not reachable. Nothing lost — it'll sync when the PC is on."); });
+}
+// Catch up whenever the app comes back to the foreground (e.g. after you
+// switch the PC on) instead of polling constantly.
+document.addEventListener("visibilitychange",function(){
+ if(!document.hidden && unlocked) syncNow(true);
+});
+el("syncBtn").addEventListener("click",function(){ syncNow(false); });
+// ---- file-based sync (works anywhere, no network needed) ----
+function txKey(t){ return t.date+"|"+String(t.desc||"").toLowerCase().trim()+"|"+(+t.amount).toFixed(3); }
+function mergeTxns(list){
+ var have={}; S.txns.forEach(function(t){ have[txKey(t)]=1; });
+ var added=0;
+ (list||[]).forEach(function(t){
+   if(!t||t.amount==null||!t.date) return;
+   var n={id:t.id||("im_"+Date.now()+Math.floor(Math.random()*1000)),date:t.date,
+     desc:t.desc||t.description||"(entry)",amount:+t.amount,category:t.category||"Other"};
+   var k=txKey(n); if(have[k]) return;
+   have[k]=1; S.txns.push(n); added++;
+ });
+ if(added){ save(); render(); }
+ return added;
+}
+function downloadJSON(obj,name){
+ var blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+ var url=URL.createObjectURL(blob), a=document.createElement("a");
+ a.href=url; a.download=name; a.click(); setTimeout(function(){URL.revokeObjectURL(url);},2000);
+}
+el("exportSync").addEventListener("click",function(){
+ downloadJSON({app:"finance-monitor",kind:"sync",exported:new Date().toISOString(),
+   txns:S.txns.map(function(t){ return {id:t.id,date:t.date,desc:t.desc,amount:t.amount,category:t.category}; })},
+   "phone-entries-"+todayISO()+".json");
+ flash("setMsg","Exported "+S.txns.length+" entries. Import this file on the PC. 📤","ok");
+});
+el("mergeBtn").addEventListener("click",function(){ el("mergeFile").click(); });
+el("mergeFile").addEventListener("change",function(){
+ var f=this.files&&this.files[0]; if(!f) return;
+ var rdr=new FileReader();
+ rdr.onload=function(){
+   try{
+     var obj=JSON.parse(rdr.result);
+     var list=obj&&obj.txns?obj.txns:(obj&&obj.data&&obj.data.txns?obj.data.txns:null);
+     if(!Array.isArray(list)) throw 0;
+     var n=mergeTxns(list);
+     flash("setMsg",n?("Merged "+n+" new transaction"+(n===1?"":"s")+". ✅"):"Nothing new — already up to date. 👍","ok");
+   }catch(e){ flash("setMsg","That file isn't a valid sync/backup file.","err"); }
+   el("mergeFile").value="";
+ };
+ rdr.readAsText(f);
+});
 el("backup").addEventListener("click",function(){
  var payload={app:"finance-monitor",v:1,exported:new Date().toISOString(),data:S,pin:localStorage.getItem(PINKEY)||null};
  var blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -846,13 +934,27 @@ function boot(){ el("app").style.display="block"; el("tabbar").style.display="fl
  el("lock").style.display="none";
  fillCats(); renderCalc(); el("date").value=todayISO();
  el("opening").value=S.opening?fmt(S.opening):""; el("income").value=S.income?fmt(S.income):"";
- render(); }
+ render();
+ setSync(idleSyncMsg());
+ syncNow(true);   // quietly pick up anything new from the PC
+}
 function tryUnlock(){
  var stored=localStorage.getItem(PINKEY); var v=el("pin").value.trim();
  if(!stored){ if(v.length<4){ el("pinErr").textContent="Choose a PIN of at least 4 digits."; return; }
    localStorage.setItem(PINKEY,hashPin(v)); unlocked=true; boot(); return; }
  if(hashPin(v)===stored){ unlocked=true; boot(); } else { el("pinErr").textContent="Wrong PIN."; el("pin").value=""; }
 }
+// A forgotten PIN can only be cleared by erasing this device's data — otherwise
+// the lock would be meaningless to anyone holding the phone.
+el("forgot").addEventListener("click",function(){
+ var n=(S&&S.txns?S.txns.length:0);
+ if(!confirm("There is no way to recover a forgotten PIN.\n\nYou can reset it, but this ERASES this device's data ("+n+" transactions). If you have a backup file you can restore it afterwards.\n\nContinue?")) return;
+ if(!confirm("Last chance — erase all data on this device and set a new PIN?")) return;
+ try{ localStorage.removeItem(PINKEY); localStorage.removeItem(KEY); }catch(e){}
+ S={opening:0,income:INCOME_DEFAULT,txns:[],budgets:{}};
+ el("lockTitle").textContent="Set a PIN"; el("lockSub").textContent="Create a PIN to protect your data";
+ el("pinBtn").textContent="Set PIN & continue"; el("pinErr").textContent=""; el("pin").value=""; el("pin").focus();
+});
 el("pinBtn").addEventListener("click",tryUnlock);
 el("pin").addEventListener("keydown",function(e){ if(e.key==="Enter")tryUnlock(); });
 // Offline support: iOS only allows this from a secure origin (HTTPS or localhost).
